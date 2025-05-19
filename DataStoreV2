@@ -1,0 +1,97 @@
+local player = game:GetService("Players")
+local DataStore = game:GetService("DataStoreService")
+local StoredData = DataStore:GetDataStore("Data")
+
+local function CreateData() -- this function is called if no data was found. You can always improve on it and change values :)
+	local Data = {
+		XP = 0,
+		Strength = 5
+	}
+	return Data
+end
+
+player.PlayerAdded:Connect(function(plr)
+	local ID = plr.UserId --User ID is unique to every player btw
+	local Data
+	
+	task.wait(3)
+	
+	local Success, FetchedData = pcall(function() -- Checks if any Data can be found
+		return StoredData:GetAsync(ID)
+	end)
+
+	if Success and FetchedData ~= nil then -- Makes sure it doesnt crash if no fetched data was given but was successfull
+		Data = FetchedData
+		print("Successfully Loaded")
+
+		-- optional for debugging :D
+		--print(FetchedData.XP, FetchedData.Strength)
+	end
+
+	if not Success then
+		Data = CreateData() -- to change, follow this : (name in line 15) = CreateData()
+		warn("No Data Fetched from ", plr.Name, "Creating new one")
+	end
+
+	local Folder = Instance.new("Folder",plr) -- To change, just follow this : local (name) = instance.New("Folder",plr)
+	Folder.Name = "Stats" -- change to what fits -O-
+	local XPCount = Instance.new("IntValue",Folder) -- To change, just follow this : local (name) = instance.New("IntValue",(name in line 31))
+	XPCount.Name = "XPCount" --Change to what fits .O.
+	XPCount.Value = Data.XP -- to change, follow this : (name in line 34).Value = Data.(Name of the value you're trying to change)
+
+	local StrCount = Instance.new("IntValue",Folder) -- To change, just follow this : local (name) = instance.New("IntValue",(name in line 31))
+	StrCount.Name = "StrCount"  --Change to what fits OwO
+	StrCount.Value = Data.Strength -- to change, follow this : (name in line 34).Value = Data.(Name of the value you're trying to change)
+
+	task.spawn(function()  -- Always Updates the player's data so it'll save properly:/ Dont know why but it doesnt save properly for me without it TwT
+		task.wait(1)
+		Data.XP = XPCount.Value -- Rename to the name given in line 33. dont replace the ".Value" unless needed but it'll probably break :/
+		Data.Strength = StrCount.Value -- rename to the name give in line 38. same as 43, it might break if changed :/
+
+		-- Optional stuff for debugging / checking, might lag a lot thoo :/
+		--print(XPCount.Value .. " Experience")
+		--print(StrCount.Value .. " Strength")
+	end)
+
+	while plr do
+		task.wait(60) -- AutoSave, Change the number inside the () to increase or decrease :)
+		local success,errr = pcall(function() 
+			StoredData:UpdateAsync(ID, function()
+				return Data
+			end)
+		end) -- dont replace this unless you changed the name in line 15
+		if success then 
+			print("Autosaved!")
+		else
+			warn("Couldn't save")
+
+		end
+	end
+end)
+
+player.PlayerRemoving:Connect(function(plr)
+	local ID = plr.UserId
+	local ParentFolder = plr:FindFirstChild("Stats") -- put the name given to the Folder in line 32 inside the () TwT
+	local XP = ParentFolder:FindFirstChild("XPCount") -- put the name given to the Folder in line 34 inside the () :)
+	local Str = ParentFolder:FindFirstChild("StrCount") -- put the name given to the Folder in line 38 inside the () OuO
+
+	if XP ~= nil and Str ~= nil then
+		local Data = {
+			XP = XP.Value,
+			Strength = Str.Value
+		}
+
+		local success,errr = pcall(function() 
+			StoredData:UpdateAsync(ID, function()
+				return Data
+			end)
+		end)
+
+		if success then 
+			print("Successfully saved")
+		else
+			warn("Couldn't save")
+		end
+
+	end
+end)
