@@ -19,6 +19,6 @@ Just clone or download this repo and put the script in your ServerScriptService.
 
 ---
 
-## Etc
+## License
 
 This project is under the MIT license. Feel free to use and modify. Just dint forget to give the proper credits to the original author 
