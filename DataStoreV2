@@ -43,17 +43,19 @@ player.PlayerAdded:Connect(function(plr)
 	StrCount.Name = "StrCount"  --Change to what fits OwO
 	StrCount.Value = Data.Strength -- to change, follow this : (name in line 34).Value = Data.(Name of the value you're trying to change)
 
-	task.spawn(function()  -- Always Updates the player's data so it'll save properly:/ Dont know why but it doesnt save properly for me without it TwT
-		task.wait(1)
+	
+		
+
+	while plr do
+
+		task.wait(1)  -- Always Updates the player's data so it'll save properly:/ Dont know why but it doesnt save properly for me without it TwT
 		Data.XP = XPCount.Value -- Rename to the name given in line 33. dont replace the ".Value" unless needed but it'll probably break :/
 		Data.Strength = StrCount.Value -- rename to the name give in line 38. same as 43, it might break if changed :/
 
 		-- Optional stuff for debugging / checking, might lag a lot thoo :/
 		--print(XPCount.Value .. " Experience")
 		--print(StrCount.Value .. " Strength")
-	end)
 
-	while plr do
 		task.wait(60) -- AutoSave, Change the number inside the () to increase or decrease :)
 		local success,errr = pcall(function() 
 			StoredData:UpdateAsync(ID, function()
