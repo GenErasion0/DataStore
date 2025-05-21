@@ -1,0 +1,135 @@
+
+local players = game:GetService("Players")
+local DataStore = game:GetService("DataStoreService")
+local StoredData = DataStore:GetDataStore("Data")
+
+local function CreateData() -- this function is called if no data was found. You can always improve on it and change values
+	local Data = {
+		Embercoins = 0
+	}
+	return Data
+end
+
+players.PlayerAdded:Connect(function(plr)
+	local ID = plr.UserId --User ID is unique to every player btw
+	local Data
+
+	task.wait(2) --waits a couple second to not use the old saved data if the player crashes or disconnects then rejoins too fast 
+
+	local Success, FetchedData = pcall(function() -- Checks if any Data can be found
+		return StoredData:GetAsync(ID)
+	end)
+
+	----- Fetch Data Check ----
+	if Success then	
+		if FetchedData ~= nil then
+			Data = FetchedData
+			print("Found Data for ".. plr.Name)
+		else
+			Data = CreateData()
+			print("Created data for ".. plr.Name)
+		end
+	else plr:Kick("Failed to fetch. Please Rejoin")
+		return
+	end
+
+	--- Player leaderstats Setup ---
+
+	local leaderstats = Instance.new("Folder") -- To change, just follow this : local (name) = instance.New("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = plr
+	local Embercoins = Instance.new("IntValue") -- To change, just follow this : local (name) = instance.New("IntValue")
+	Embercoins.Name = "Embercoins" --Change to what fits 
+	Embercoins.Value = Data.Embercoins -- to change, follow this : (name in line 34).Value = Data.(Name of the value you're trying to change)
+	Embercoins.Parent = leaderstats
+
+
+	--- Change Tracking
+	Embercoins:GetPropertyChangedSignal("Value"):Connect(function()
+		Data.Embercoins = Embercoins.Value
+	end)
+
+
+	----Autosave Stuff ----
+
+	task.spawn(function() 
+		while plr and plr.Parent ~= nil do
+			task.wait(60)
+			local success, errr = pcall(function() 
+				StoredData:UpdateAsync(ID, function()
+					return Data
+				end)
+			end)
+			if success then 
+				print("Autosaved!")
+			else
+				warn("Couldn't save")
+			end
+		end
+	end)
+end)
+
+-------------------------------
+
+players.PlayerRemoving:Connect(function(plr)
+	local ID = plr.UserId
+
+	--- Finding player data ---
+
+	local ParentFolder = plr:FindFirstChild("leaderstats")-- put the name given to the Folder in line 32 inside the () 
+	if not ParentFolder then return end
+
+	local plrEmbercoins = ParentFolder:FindFirstChild("Embercoins") -- put the name given to the Folder in line 34 inside the () 
+	if not plrEmbercoins then return end
+
+	--- actual saving ---
+
+
+	-- just copy the data format to here in line 6 if you changed anything
+	local Data = {
+		Embercoins = plrEmbercoins.Value
+	}
+
+	local success,errr = pcall(function() 
+		StoredData:UpdateAsync(ID, function()
+			return Data
+		end)
+	end)
+
+	if success then 
+		print("Successfully saved")
+	else
+		warn("Couldn't save")
+	end
+end)
+
+---- Shutdown stuff :/ ----
+
+game:BindToClose(function()
+	for _, plr in ipairs(players:GetPlayers()) do
+		local ID = plr.UserId
+		
+		--- Fetching player data --- 
+		local ParentFolder = plr:FindFirstChild("leaderstats")
+		if not ParentFolder then continue end
+		
+		local plrEmbercoins = ParentFolder:FindFirstChild("Embercoins")
+		if not plrEmbercoins then continue end
+
+		local Data = {
+			Embercoins = plrEmbercoins.Value
+		}
+
+		local success, errr = pcall(function()
+			StoredData:UpdateAsync(ID, function()
+				return Data
+			end)
+		end)
+
+		if success then
+			print("Saved on shutdown for", plr.Name)
+		else
+			warn("Couldn't save on shutdown for", plr.Name)
+		end
+	end
+end)
